@@ -1,522 +1,86 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mavericks Snakes</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#0f1724;
-      --panel:#0b1220;
-      --accent:#10b981;
-      --muted:#94a3b8;
-      --card:#0b1220;
-    }
-    *{box-sizing:border-box;font-family:'Poppins',system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    body{margin:0;background:linear-gradient(180deg,#071028 0%, #071a2a 100%);color:#e6eef6;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
-    .wrap{width:920px;max-width:96vw}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-    .logo{display:flex;align-items:center;gap:12px}
-    .logo .brand{font-weight:700;font-size:22px;letter-spacing:0.6px}
-    .logo .sub{font-size:12px;color:var(--muted);margin-top:2px}
-    .controls{display:flex;gap:8px;align-items:center}
-    button{background:var(--accent);border:none;color:#042018;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer;box-shadow:0 6px 12px rgba(0,0,0,0.45)}
-    button.secondary{background:#334155;color:#e6eef6}
-    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);box-shadow:none}
-    .layout{display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start}
-    .card{background:rgba(255,255,255,0.02);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-    .game-area{display:flex;flex-direction:column;align-items:center;gap:12px}
-    canvas{background:linear-gradient(180deg,#042033,#052a3c);border-radius:8px;border:6px solid rgba(255,255,255,0.03)}
-    .info{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-    .info .item{background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;font-size:13px;color:var(--muted)}
-    .sidebar{display:flex;flex-direction:column;gap:12px}
-    .muted{color:var(--muted);font-size:13px}
-    .phrase-box{height:72px;background:linear-gradient(180deg,#041424,#06292f);border-radius:10px;padding:12px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:600;color:#dff6ec}
-    .phrase-hidden{visibility:hidden;opacity:0;transition:all .25s}
-    .phrase-visible{visibility:visible;opacity:1;transition:all .25s}
-    .top-controls{display:flex;gap:8px;flex-wrap:wrap}
-    .small{font-size:12px;padding:6px 8px;border-radius:8px}
-    .game-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.6));border-radius:8px}
-    .overlay-box{background:rgba(2,6,23,0.9);padding:18px;border-radius:10px;text-align:center}
-    .overlay-box h2{margin:0 0 6px 0}
-    .footer-note{font-size:12px;color:var(--muted);margin-top:8px}
-    /* responsive */
-    @media (max-width:880px){ .layout{grid-template-columns:1fr} .sidebar{order:2} .game-area{order:1} }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mavericks Snakes</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="logo">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" style="filter:drop-shadow(0 6px 18px rgba(0,0,0,0.6))">
-          <rect width="24" height="24" rx="6" fill="#0ea5a4"></rect>
-          <path d="M6 15c2-4 7-7 10-4" stroke="#052018" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div>
-          <div class="brand">Mavericks Snakes</div>
-          <div class="sub">Jogo da cobrinha — use as setas ←↑→↓</div>
-        </div>
-      </div>
-      <div class="controls">
-        <div class="top-controls">
-          <button id="startBtn">Start</button>
-          <button id="pauseBtn" class="secondary">Pause</button>
-          <button id="continueBtn" class="secondary">Continue</button>
-          <button id="restartBtn" class="ghost">Restart</button>
-        </div>
-      </div>
-    </header>
-
-    <div class="layout">
-      <div class="card game-area" style="position:relative">
-        <canvas id="game" width="560" height="420"></canvas>
-
-        <div class="info" aria-live="polite">
-          <div class="item">Pontuação: <span id="score">0</span></div>
-          <div class="item">Nível: <span id="level">1</span></div>
-          <div class="item">Velocidade: <span id="speed">1</span>x</div>
-          <div class="item">Comprimento: <span id="length">3</span></div>
-        </div>
-
-        <div id="overlayContainer" style="position:absolute;left:14px;right:14px;top:14px;bottom:14px;pointer-events:none"></div>
-
-        <div class="footer-note">Regras: comer a comida aumenta pontuação. A cada nível a cobra cresce e fica mais rápida. A cada 5 níveis aparece uma frase por 3s.</div>
-      </div>
-
-      <aside class="sidebar">
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-weight:700">Painel</div>
-            <div class="muted" style="font-size:12px">Configurações</div>
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-            <label class="muted" style="min-width:90px">Tamanho da grade:</label>
-            <select id="gridSize" style="padding:8px;border-radius:8px;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.04)">
-              <option value="20">20px</option>
-              <option value="16" selected>16px</option>
-              <option value="12">12px (mais denso)</option>
-            </select>
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center">
-            <label class="muted" style="min-width:90px">Modo parede:</label>
-            <select id="wallMode" style="padding:8px;border-radius:8px;background:transparent;color:inherit;border:1px solid rgba(255,255,255,0.04)">
-              <option value="die">Morre ao bater</option>
-              <option value="wrap">Enrola (wrap)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="card">
-          <div style="font-weight:700;margin-bottom:8px">Área de frases (milestones)</div>
-          <div id="phraseBox" class="phrase-box phrase-hidden">Aqui aparecerão frases em marcos de 5 níveis.</div>
-          <div style="margin-top:8px;color:var(--muted);font-size:13px">A cada 5 níveis a frase aparece por 3 segundos.</div>
-        </div>
-
-        <div class="card">
-          <div style="font-weight:700;margin-bottom:8px">Controles</div>
-          <div class="muted">Use as setas do teclado para mover a cobra. Previna reversão direta (ex.: esquerda → direita).</div>
-        </div>
-      </aside>
+<div class="wrap">
+<header>
+  <div class="logo">
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#0ea5a4"></rect>
+      <path d="M6 15c2-4 7-7 10-4" stroke="#052018" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="brand">Mavericks Snakes</div>
+      <div class="sub">Jogo da cobrinha — use as setas ←↑→↓</div>
     </div>
   </div>
+  <div class="controls">
+    <button id="startBtn">Start</button>
+    <button id="pauseBtn">Pause</button>
+    <button id="continueBtn">Continue</button>
+    <button id="restartBtn">Restart</button>
+  </div>
+</header>
 
-<script>
-/*
-  Mavericks Snakes
-  - Arrow keys to move
-  - Start / Pause / Continue / Restart
-  - Grows every level, speeds up each level
-  - Color changes per level
-  - Every 5 levels show a phrase (3 seconds) in phraseBox (outside canvas)
-*/
+<div class="layout">
+  <div class="card game-area" style="position:relative">
+    <canvas id="game" width="560" height="420"></canvas>
+    <div class="info">
+      <div>Pontuação: <span id="score">0</span></div>
+      <div>Nível: <span id="level">1</span></div>
+      <div>Velocidade: <span id="speed">1</span>x</div>
+      <div>Comprimento: <span id="length">3</span></div>
+    </div>
 
-(() => {
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
+    <div id="overlayContainer"></div>
 
-  const startBtn = document.getElementById('startBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
-  const continueBtn = document.getElementById('continueBtn');
-  const restartBtn = document.getElementById('restartBtn');
+    <div class="footer-note">Regras: comer a comida aumenta pontuação. A cada nível a cobra cresce e fica mais rápida. A cada 5 níveis aparece uma frase e toca som do CR7.</div>
+  </div>
 
-  const scoreEl = document.getElementById('score');
-  const levelEl = document.getElementById('level');
-  const speedEl = document.getElementById('speed');
-  const lengthEl = document.getElementById('length');
-  const phraseBox = document.getElementById('phraseBox');
+  <aside class="sidebar">
+    <div class="card">
+      <div><strong>Painel</strong></div>
+      <div class="muted">Configurações</div>
 
-  const gridSizeSelect = document.getElementById('gridSize');
-  const wallModeSelect = document.getElementById('wallMode');
+      <label class="muted">Tamanho da grade:</label>
+      <select id="gridSize">
+        <option value="20">20px</option>
+        <option value="16" selected>16px</option>
+        <option value="12">12px (mais denso)</option>
+      </select>
 
-  // Game state
-  let gridSize = parseInt(gridSizeSelect.value, 10); // pixels
-  let cols = Math.floor(canvas.width / gridSize);
-  let rows = Math.floor(canvas.height / gridSize);
+      <label class="muted">Modo parede:</label>
+      <select id="wallMode">
+        <option value="die">Morre ao bater</option>
+        <option value="wrap">Enrola (wrap)</option>
+      </select>
+    </div>
 
-  let snake = [];
-  let dir = { x: 1, y: 0 }; // start moving right
-  let nextDir = { x: 1, y: 0 };
-  let food = null;
-  let gameInterval = null;
-  let baseIntervalMs = 160; // initial tick (will be divided by speed factor)
-  let speedMultiplier = 1;
-  let score = 0;
-  let level = 1;
-  let started = false;
-  let paused = false;
-  let wallMode = wallModeSelect.value; // 'die' or 'wrap'
+    <div class="card">
+      <strong>Área de frases (milestones)</strong>
+      <div id="phraseBox" class="phrase-box phrase-hidden"></div>
+    </div>
 
-  // Colors per level (cycles)
-  const palette = [
-    '#34d399', '#60a5fa', '#f472b6', '#f59e0b', '#a78bfa',
-    '#fb7185', '#34d399', '#06b6d4', '#f97316', '#a3e635'
-  ];
+    <div class="card">
+      <strong>Ranking Top 5</strong>
+      <div id="rankingList"></div>
+    </div>
+  </aside>
+</div>
+</div>
 
-  // milestone phrases for every 5 levels
-  const milestonePhrases = [
-    "Você chegou a um marco! Continue firme.",
-    "Maverick em ação — acelere!",
-    "Excelente! Mantendo o rastro firme.",
-    "Show! A cobra está dominando.",
-    "Excelente progresso — foco e controle!"
-  ];
+<!-- Sons -->
+<audio id="eatSound" src="eat.mp3"></audio>
+<audio id="hitSound" src="hit.mp3"></audio>
+<audio id="cr7Sound" src="cr7.mp3"></audio>
 
-  // Helper: reset computed grid when grid size changes
-  function recomputeGrid() {
-    gridSize = parseInt(gridSizeSelect.value, 10);
-    cols = Math.floor(canvas.width / gridSize);
-    rows = Math.floor(canvas.height / gridSize);
-  }
-
-  // Initialize / reset game
-  function initGame() {
-    recomputeGrid();
-    snake = [];
-    const startLen = 3;
-    for (let i = startLen - 1; i >= 0; i--) {
-      snake.push({ x: Math.floor(cols/2) - i, y: Math.floor(rows/2) });
-    }
-    dir = { x: 1, y: 0 };
-    nextDir = { x: 1, y: 0 };
-    score = 0;
-    level = 1;
-    speedMultiplier = 1;
-    baseIntervalMs = 160;
-    placeFood();
-    started = false;
-    paused = false;
-    updateUI();
-    draw();
-  }
-
-  function updateUI() {
-    scoreEl.textContent = score;
-    levelEl.textContent = level;
-    speedEl.textContent = speedMultiplier.toFixed(2);
-    lengthEl.textContent = snake.length;
-  }
-
-  function placeFood() {
-    const occupied = new Set(snake.map(s => s.x + ',' + s.y));
-    let tries = 0;
-    while (tries < 1000) {
-      const fx = Math.floor(Math.random() * cols);
-      const fy = Math.floor(Math.random() * rows);
-      if (!occupied.has(fx + ',' + fy)) {
-        food = { x: fx, y: fy };
-        return;
-      }
-      tries++;
-    }
-    // fallback
-    food = { x: 0, y: 0 };
-  }
-
-  // Draw everything
-  function clearCanvas() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-  }
-  function drawGrid() {
-    // subtle grid (optional)
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.02)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= cols; x++) {
-      ctx.beginPath();
-      ctx.moveTo(x * gridSize, 0);
-      ctx.lineTo(x * gridSize, rows * gridSize);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= rows; y++) {
-      ctx.beginPath();
-      ctx.moveTo(0, y * gridSize);
-      ctx.lineTo(cols * gridSize, y * gridSize);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-  function draw() {
-    clearCanvas();
-    // background fill
-    ctx.fillStyle = 'rgba(4,18,28,0.22)';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    // grid
-    drawGrid();
-
-    // food
-    if (food) {
-      ctx.fillStyle = '#ff4757';
-      roundRect(ctx, food.x * gridSize + 3, food.y * gridSize + 3, gridSize - 6, gridSize - 6, 6);
-      ctx.fill();
-    }
-
-    // snake
-    const color = palette[(level-1) % palette.length] || '#34d399';
-    for (let i = 0; i < snake.length; i++) {
-      const s = snake[i];
-      const radius = Math.max(2, Math.floor(gridSize/5));
-      const isHead = (i === 0);
-      const alpha = isHead ? 1 : 0.9 - (i / snake.length) * 0.6;
-      ctx.fillStyle = hexToRgba(color, alpha);
-      roundRect(ctx, s.x * gridSize + 1, s.y * gridSize + 1, gridSize - 2, gridSize - 2, radius);
-      ctx.fill();
-    }
-  }
-
-  // advance game state per tick
-  function tick() {
-    if (!started || paused) return;
-    // apply nextDir if not reversing
-    if (!(nextDir.x === -dir.x && nextDir.y === -dir.y)) {
-      dir = { ...nextDir };
-    }
-    let newHead = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-
-    // wall handling
-    if (wallMode === 'wrap') {
-      if (newHead.x < 0) newHead.x = cols - 1;
-      if (newHead.x >= cols) newHead.x = 0;
-      if (newHead.y < 0) newHead.y = rows - 1;
-      if (newHead.y >= rows) newHead.y = 0;
-    } else {
-      // die if hits wall
-      if (newHead.x < 0 || newHead.x >= cols || newHead.y < 0 || newHead.y >= rows) {
-        return gameOver();
-      }
-    }
-
-    // self collision?
-    if (snake.some((seg, idx) => seg.x === newHead.x && seg.y === newHead.y)) {
-      return gameOver();
-    }
-
-    snake.unshift(newHead);
-
-    // ate food?
-    if (food && newHead.x === food.x && newHead.y === food.y) {
-      score++;
-      placeFood();
-      // growth on eating happens naturally by not popping tail
-      // check level up condition: for this game, level increases every 5 points
-      // but user wanted "cresca a cada nivel" -> we will increase level when score >= level * 5
-      if (score >= level * 5) {
-        levelUp();
-      }
-    } else {
-      // normal move: remove tail
-      snake.pop();
-    }
-
-    updateUI();
-    draw();
-  }
-
-  function levelUp() {
-    level++;
-    // increase speed: increment multiplier a bit
-    speedMultiplier *= 1.15; // speed grows 15% each level
-    // also grow snake additional segments (e.g., 2 segments)
-    for (let i = 0; i < 2; i++) {
-      const tail = snake[snake.length - 1];
-      snake.push({ x: tail.x, y: tail.y });
-    }
-
-    // change canvas border glow or other visual indicator (we change palette index used in render)
-    // milestone phrase at every 5 levels
-    if (level % 5 === 0) {
-      showMilestonePhrase();
-    }
-
-    restartTickTimer();
-  }
-
-  function showMilestonePhrase() {
-    const text = milestonePhrases[Math.floor(Math.random()*milestonePhrases.length)];
-    phraseBox.textContent = text;
-    phraseBox.classList.remove('phrase-hidden');
-    phraseBox.classList.add('phrase-visible');
-    // hide after 3s
-    setTimeout(() => {
-      phraseBox.classList.remove('phrase-visible');
-      phraseBox.classList.add('phrase-hidden');
-    }, 3000);
-  }
-
-  function restartTickTimer() {
-    if (gameInterval) clearInterval(gameInterval);
-    // compute effective ms = baseIntervalMs / speedMultiplier (faster => smaller ms)
-    // but clamp a minimum interval
-    const effectiveMs = Math.max(35, baseIntervalMs / speedMultiplier);
-    gameInterval = setInterval(tick, Math.round(effectiveMs));
-    speedEl.textContent = speedMultiplier.toFixed(2);
-  }
-
-  function startGame() {
-    if (!started) {
-      started = true;
-      paused = false;
-      // ensure initial tick timer
-      restartTickTimer();
-      updateUI();
-    }
-  }
-
-  function pauseGame() {
-    if (!started) return;
-    paused = true;
-    if (gameInterval) clearInterval(gameInterval);
-    gameInterval = null;
-  }
-
-  function continueGame() {
-    if (!started) return;
-    if (!paused) return;
-    paused = false;
-    restartTickTimer();
-  }
-
-  function restartGame() {
-    if (gameInterval) clearInterval(gameInterval);
-    initGame();
-  }
-
-  function gameOver() {
-    paused = true;
-    started = false;
-    if (gameInterval) clearInterval(gameInterval);
-    gameInterval = null;
-    // overlay
-    showOverlay(`Game Over — Pontuação: ${score}`, true);
-  }
-
-  // overlay messages
-  function showOverlay(text, showRestartBtn = true) {
-    const container = document.getElementById('overlayContainer');
-    container.innerHTML = '';
-    const el = document.createElement('div');
-    el.className = 'game-overlay';
-    el.style.pointerEvents = 'auto';
-    el.innerHTML = `
-      <div class="overlay-box card">
-        <h2>${text}</h2>
-        <div style="margin-top:8px">
-          <button id="overlayRestart" style="margin-right:8px">Restart</button>
-          <button id="overlayClose" class="secondary">Fechar</button>
-        </div>
-      </div>
-    `;
-    container.appendChild(el);
-    document.getElementById('overlayRestart').addEventListener('click', () => {
-      container.innerHTML = '';
-      restartGame();
-    });
-    document.getElementById('overlayClose').addEventListener('click', () => {
-      container.innerHTML = '';
-    });
-  }
-
-  // handle keyboard
-  window.addEventListener('keydown', (e) => {
-    if (!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) return;
-    e.preventDefault();
-    switch (e.key) {
-      case 'ArrowUp':    nextDir = { x: 0, y: -1 }; break;
-      case 'ArrowDown':  nextDir = { x: 0, y: 1 };  break;
-      case 'ArrowLeft':  nextDir = { x: -1, y: 0 }; break;
-      case 'ArrowRight': nextDir = { x: 1, y: 0 };  break;
-    }
-    // start game automatically when arrow pressed (if not started)
-    if (!started) startGame();
-  });
-
-  // prevent reverse direct: logic handled in tick by checking nextDir
-
-  // UI bindings
-  startBtn.addEventListener('click', () => {
-    if (!started) {
-      startGame();
-      // disable start to avoid multiple clicks
-    } else {
-      // restart if already started?
-    }
-  });
-  pauseBtn.addEventListener('click', () => {
-    pauseGame();
-  });
-  continueBtn.addEventListener('click', () => {
-    continueGame();
-  });
-  restartBtn.addEventListener('click', () => {
-    restartGame();
-  });
-
-  gridSizeSelect.addEventListener('change', () => {
-    // change grid size midgame: re-init to keep consistency
-    recomputeGrid();
-    // reposition snake inside new grid
-    initGame();
-  });
-
-  wallModeSelect.addEventListener('change', () => {
-    wallMode = wallModeSelect.value;
-  });
-
-  // small helpers
-  function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-  }
-
-  function hexToRgba(hex, alpha = 1) {
-    const h = hex.replace('#','');
-    const bigint = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h,16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >>w 8) & 255;
-    const b = bigint & 255;
-    return `rgba(${r},${g},${b},${alpha})`;
-  }
-
-  // initialize first screen
-  initGame();
-
-  // expose some functions to console for debugging (optional)
-  window.mavericks = {
-    start: startGame,
-    pause: pauseGame,
-    cont: continueGame,
-    restart: restartGame,
-    getState: () => ({score, level, speedMultiplier, length: snake.length})
-  };
-})();
-</script>
+<script src="index.js"></script>
 </body>
 </html>
